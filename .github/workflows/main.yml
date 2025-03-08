@@ -1,0 +1,91 @@
+import os
+import json
+
+# Carpeta donde se almacenarán los archivos de clientes
+CLIENTES_DIR = "clientes"
+os.makedirs(CLIENTES_DIR, exist_ok=True)
+
+# Diccionario (tabla hash) para almacenar los clientes y sus archivos
+clientes_dict = {}
+
+def cargar_clientes():
+    """Carga la información de todos los clientes en el diccionario."""
+    for filename in os.listdir(CLIENTES_DIR):
+        if filename.endswith(".json"):
+            cliente_nombre = filename.replace(".json", "")
+            clientes_dict[cliente_nombre] = os.path.join(CLIENTES_DIR, filename)
+
+def crear_cliente(nombre, direccion, telefono, servicio):
+    """Crea un nuevo archivo para un cliente con su información inicial."""
+    if nombre in clientes_dict:
+        print("El cliente ya existe.")
+        return
+    
+    cliente_path = os.path.join(CLIENTES_DIR, f"{nombre}.json")
+    cliente_data = {
+        "nombre": nombre,
+        "direccion": direccion,
+        "telefono": telefono,
+        "servicios": [servicio]
+    }
+    
+    with open(cliente_path, "w") as f:
+        json.dump(cliente_data, f, indent=4)
+    
+    # Agregar el cliente al diccionario
+    clientes_dict[nombre] = cliente_path
+    
+    print(f"Cliente {nombre} creado exitosamente.")
+
+def ver_cliente(nombre):
+    """Muestra la información de un cliente."""
+    if nombre not in clientes_dict:
+        print("El cliente no existe.")
+        return
+    
+    cliente_path = clientes_dict[nombre]
+    
+    with open(cliente_path, "r") as f:
+        cliente_data = json.load(f)
+        print(json.dumps(cliente_data, indent=4))
+
+def agregar_servicio(nombre, servicio):
+    """Agrega un nuevo servicio a un cliente existente."""
+    if nombre not in clientes_dict:
+        print("El cliente no existe.")
+        return
+    
+    cliente_path = clientes_dict[nombre]
+    
+    with open(cliente_path, "r+") as f:
+        cliente_data = json.load(f)
+        cliente_data["servicios"].append(servicio)
+        f.seek(0)
+        json.dump(cliente_data, f, indent=4)
+        f.truncate()
+    
+    print(f"Servicio agregado a {nombre}.")
+
+def listar_clientes():
+    """Lista todos los clientes almacenados."""
+    if clientes_dict:
+        print("Clientes registrados:", ", ".join(clientes_dict.keys()))
+    else:
+        print("No hay clientes registrados.")
+
+if __name__ == "__main__":
+    import sys
+    # Cargar clientes existentes al iniciar el programa
+    cargar_clientes()
+
+    accion = sys.argv[1]
+    if accion == "crear":
+        crear_cliente(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
+    elif accion == "ver":
+        ver_cliente(sys.argv[2])
+    elif accion == "agregar":
+        agregar_servicio(sys.argv[2], sys.argv[3])
+    elif accion == "listar":
+        listar_clientes()
+    else:
+        print("Acción no reconocida.")
